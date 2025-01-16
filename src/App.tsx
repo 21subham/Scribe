@@ -1,35 +1,53 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Footer from "./components/Footer";
 import Header from "./components/Header";
 import Homepage from "./components/Homepage";
 import FileDisplay from "./components/FileDisplay";
+import Information from "./components/Information";
+import Transcribing from "./components/Transcribing";
 
 function App() {
-  const [file, SetFile] = useState<File | null>(null);
-  const [audioStream, SetAudioStream] = useState<Blob | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [audioStream, setAudioStream] = useState<Blob | null>(null);
+  // const[output,setOutput] = useState<Blob | null>(null);
+  const [output, setOutput] = useState(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [finished, setFinished] = useState<boolean>(false);
+
   const isAudioAvailable = file || audioStream;
 
+  const worker = useRef<Worker | null>(null);
+
+  useEffect(() => {});
+
   function handleAudioReset() {
-    SetFile(null);
-    SetAudioStream(null);
+    setFile(null);
+    setAudioStream(null);
   }
 
   return (
-    <div className="flex flex-col p-4 max-w-[1000px] mx-auto w-full">
-      <section className="min-h-screen flex flex-col">
-        <Header />
-        {isAudioAvailable ? (
-          <FileDisplay
-            handleAudioReset={handleAudioReset}
-            file={file}
-            audioStream={audioStream}
-          />
-        ) : (
-          <Homepage setFile={SetFile} setAudioStream={SetAudioStream} />
-        )}
-      </section>
-      <h1>Chai</h1>
-      <footer></footer>
-    </div>
+    <>
+      <div className="flex flex-col mx-auto w-full max-w-[1000px]">
+        <section className="min-h-screen flex flex-col ">
+          <Header />
+          {output ? (
+            <Information />
+          ) : isLoading ? (
+            <Transcribing />
+          ) : isAudioAvailable ? (
+            <FileDisplay
+              handleAudioReset={handleAudioReset}
+              file={file}
+              audioStream={audioStream}
+            />
+          ) : (
+            <Homepage setFile={setFile} setAudioStream={setAudioStream} />
+          )}
+          {}
+        </section>
+        <Footer />
+      </div>
+    </>
   );
 }
 
