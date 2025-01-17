@@ -9,8 +9,7 @@ import Transcribing from "./components/Transcribing";
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [audioStream, setAudioStream] = useState<Blob | null>(null);
-  // const[output,setOutput] = useState<Blob | null>(null);
-  const [output, setOutput] = useState(null);
+  const [output, setOutput] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [finished, setFinished] = useState<boolean>(false);
 
@@ -18,7 +17,11 @@ function App() {
 
   const worker = useRef<Worker | null>(null);
 
-  useEffect(() => {});
+  useEffect(() => {
+    if (!worker.current) {
+      worker.current = new worker(new URL("./"));
+    }
+  });
 
   function handleAudioReset() {
     setFile(null);
