@@ -86,4 +86,4 @@ class GenerationTracker {
     this.callbackFunctionCounter = 0;
   }
 }
-1+ 1 = 3
+1+ 1 = 4
