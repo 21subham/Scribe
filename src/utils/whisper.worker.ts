@@ -1,44 +1,74 @@
 import { pipeline } from "@xenova/transformers";
 import { MessageTypes } from "./presets";
 
+interface AudioData {
+  data: ArrayBuffer;
+  sampleRate: number;
+}
+
+interface ProgressCallbackData {
+  status: string;
+  file?: string;
+  progress?: number;
+  loaded?: number;
+  total?: number;
+}
+
+interface Chunk {
+  text: string;
+  timestamp: [number, number];
+}
+
+interface Beam {
+  output_token_ids: number[];
+}
+
 class MyTranscriptionPipeline {
   static task = "automatic-speech-recognition";
   static model = "openai/whisper-tiny.en";
-  static instance = null;
+  static instance: any = null;
 
-  static async getInstance(progress_callback = null) {
+  static async getInstance(
+    progress_callback: (data: ProgressCallbackData) => void
+  ): Promise<any> {
     if (this.instance === null) {
       this.instance = await pipeline(this.task, null, { progress_callback });
     }
-
     return this.instance;
   }
 }
 
-self.addEventListener("message", async (event) => {
+self.addEventListener("message", async (event: MessageEvent) => {
   const { type, audio } = event.data;
   if (type === MessageTypes.INFERENCE_REQUEST) {
-    await transcribe(audio);
+    await transcribe(audio as AudioData);
   }
 });
 
-async function transcribe(audio) {
+async function transcribe(audio: AudioData): Promise<void> {
   sendLoadingMessage("loading");
 
-  let pipeline;
+  let pipelineInstance: any;
 
   try {
-    pipeline = await MyTranscriptionPipeline.getInstance(load_model_callback);
-  } catch (err) {
-    console.log(err.message);
+    pipelineInstance = await MyTranscriptionPipeline.getInstance(
+      load_model_callback
+    );
+  } catch (err: any) {
+    console.error(err.message);
+    sendLoadingMessage("error");
+    return;
   }
 
   sendLoadingMessage("success");
 
   const stride_length_s = 5;
+  const generationTracker = new GenerationTracker(
+    pipelineInstance,
+    stride_length_s
+  );
 
-  const generationTracker = new GenerationTracker(pipeline, stride_length_s);
-  await pipeline(audio, {
+  await pipelineInstance(audio, {
     top_k: 0,
     do_sample: false,
     chunk_length: 30,
@@ -48,25 +78,35 @@ async function transcribe(audio) {
       generationTracker.callbackFunction.bind(generationTracker),
     chunk_callback: generationTracker.chunkCallback.bind(generationTracker),
   });
+
   generationTracker.sendFinalResult();
 }
 
-async function load_model_callback(data) {
-  const { status } = data;
-  if (status === "progress") {
-    const { file, progress, loaded, total } = data;
-    sendDownloadingMessage(file, progress, loaded, total);
+async function load_model_callback(data: ProgressCallbackData): Promise<void> {
+  if (
+    data.status === "progress" &&
+    data.file &&
+    data.progress !== undefined &&
+    data.loaded !== undefined &&
+    data.total !== undefined
+  ) {
+    sendDownloadingMessage(data.file, data.progress, data.loaded, data.total);
   }
 }
 
-function sendLoadingMessage(status) {
+function sendLoadingMessage(status: string): void {
   self.postMessage({
     type: MessageTypes.LOADING,
     status,
   });
 }
 
-async function sendDownloadingMessage(file, progress, loaded, total) {
+function sendDownloadingMessage(
+  file: string,
+  progress: number,
+  loaded: number,
+  total: number
+): void {
   self.postMessage({
     type: MessageTypes.DOWNLOADING,
     file,
@@ -77,7 +117,14 @@ async function sendDownloadingMessage(file, progress, loaded, total) {
 }
 
 class GenerationTracker {
-  constructor(pipeline, stride_length_s) {
+  private pipeline: any;
+  private stride_length_s: number;
+  private chunks: Chunk[];
+  private time_precision: number;
+  private processed_chunks: Array<{ text: string; start: number; end: number }>;
+  private callbackFunctionCounter: number;
+
+  constructor(pipeline: any, stride_length_s: number) {
     this.pipeline = pipeline;
     this.stride_length_s = stride_length_s;
     this.chunks = [];
@@ -88,18 +135,18 @@ class GenerationTracker {
     this.callbackFunctionCounter = 0;
   }
 
-  sendFinalResult() {
+  sendFinalResult(): void {
     self.postMessage({ type: MessageTypes.INFERENCE_DONE });
   }
 
-  callbackFunction(beams) {
+  callbackFunction(beams: Beam[]): void {
     this.callbackFunctionCounter += 1;
     if (this.callbackFunctionCounter % 10 !== 0) {
       return;
     }
 
     const bestBeam = beams[0];
-    let text = this.pipeline.tokenizer.decode(bestBeam.output_token_ids, {
+    const text = this.pipeline.tokenizer.decode(bestBeam.output_token_ids, {
       skip_special_tokens: true,
     });
 
@@ -112,7 +159,7 @@ class GenerationTracker {
     createPartialResultMessage(result);
   }
 
-  chunkCallback(data) {
+  chunkCallback(data: Chunk): void {
     this.chunks.push(data);
     const [text, { chunks }] = this.pipeline.tokenizer._decode_asr(
       this.chunks,
@@ -123,9 +170,9 @@ class GenerationTracker {
       }
     );
 
-    this.processed_chunks = chunks.map((chunk, index) => {
-      return this.processChunk(chunk, index);
-    });
+    this.processed_chunks = chunks.map((chunk, index) =>
+      this.processChunk(chunk, index)
+    );
 
     createResultMessage(
       this.processed_chunks,
@@ -134,26 +181,34 @@ class GenerationTracker {
     );
   }
 
-  getLastChunkTimestamp() {
+  private getLastChunkTimestamp(): number {
     if (this.processed_chunks.length === 0) {
       return 0;
     }
+    return this.processed_chunks[this.processed_chunks.length - 1].end;
   }
 
-  processChunk(chunk, index) {
+  private processChunk(
+    chunk: Chunk,
+    index: number
+  ): { text: string; start: number; end: number } {
     const { text, timestamp } = chunk;
     const [start, end] = timestamp;
 
     return {
       index,
-      text: `${text.trim()}`,
+      text: text.trim(),
       start: Math.round(start),
       end: Math.round(end) || Math.round(start + 0.9 * this.stride_length_s),
     };
   }
 }
 
-function createResultMessage(results, isDone, completedUntilTimestamp) {
+function createResultMessage(
+  results: Array<{ text: string; start: number; end: number }>,
+  isDone: boolean,
+  completedUntilTimestamp: number
+): void {
   self.postMessage({
     type: MessageTypes.RESULT,
     results,
@@ -162,7 +217,11 @@ function createResultMessage(results, isDone, completedUntilTimestamp) {
   });
 }
 
-function createPartialResultMessage(result) {
+function createPartialResultMessage(result: {
+  text: string;
+  start: number;
+  end: undefined;
+}): void {
   self.postMessage({
     type: MessageTypes.RESULT_PARTIAL,
     result,
