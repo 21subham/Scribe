@@ -27,7 +27,7 @@ function App() {
       );
     }
 
-    const onMessageReceived = async (e: any) => {
+    const onMessageReceived = async (e: MessageEvent) => {
       switch (e.data.type) {
         case "DOWNLOADING":
           setDownloading(true);
@@ -53,13 +53,13 @@ function App() {
     worker.current.addEventListener("message", onMessageReceived);
     return () =>
       worker.current?.removeEventListener("message", onMessageReceived);
-  }, []);
+  });
 
-  async function readAudioFrom(file) {
-    const sampling_rate = 1600;
+  async function readAudioFrom(file: File | Blob | null) {
+    const sampling_rate = 16000;
     const audioCTX = new AudioContext({ sampleRate: sampling_rate });
-    const response = await file.arrayBuffer();
-    const decoded = await audioCTX.decodeAudioData(response);
+    const response = await file?.arrayBuffer();
+    const decoded = await audioCTX.decodeAudioData(response!);
     const audio = decoded.getChannelData(0);
     return audio;
   }
@@ -95,6 +95,7 @@ function App() {
             <Transcribing />
           ) : isAudioAvailable ? (
             <FileDisplay
+              handleFormSubmission={handleFormSubmission}
               handleAudioReset={handleAudioReset}
               file={file}
               audioStream={audioStream}
@@ -102,7 +103,6 @@ function App() {
           ) : (
             <Homepage setFile={setFile} setAudioStream={setAudioStream} />
           )}
-          {}
         </section>
         <Footer />
       </div>

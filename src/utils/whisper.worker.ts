@@ -1,6 +1,7 @@
-import { pipeline } from "@xenova/transformers";
+import { pipeline, PipelineType, env } from "@xenova/transformers";
 import { MessageTypes } from "./presets";
 
+env.allowLocalModels = false;
 interface AudioData {
   data: ArrayBuffer;
   sampleRate: number;
@@ -14,6 +15,13 @@ interface ProgressCallbackData {
   total?: number;
 }
 
+interface ProcessChunk {
+  chunk: Chunk;
+  index: number;
+  text?: string;
+  start?: number;
+  end?: number;
+}
 interface Chunk {
   text: string;
   timestamp: [number, number];
@@ -24,7 +32,7 @@ interface Beam {
 }
 
 class MyTranscriptionPipeline {
-  static task = "automatic-speech-recognition";
+  static task: PipelineType = "automatic-speech-recognition";
   static model = "openai/whisper-tiny.en";
   static instance: any = null;
 
@@ -54,8 +62,9 @@ async function transcribe(audio: AudioData): Promise<void> {
     pipelineInstance = await MyTranscriptionPipeline.getInstance(
       load_model_callback
     );
-  } catch (err: any) {
-    console.error(err.message);
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error(error.message);
     sendLoadingMessage("error");
     return;
   }
@@ -170,8 +179,8 @@ class GenerationTracker {
       }
     );
 
-    this.processed_chunks = chunks.map((chunk, index) =>
-      this.processChunk(chunk, index)
+    this.processed_chunks = chunks.map((chunk: Chunk, index: number) =>
+      this.processChunk({ chunk, index })
     );
 
     createResultMessage(
@@ -188,10 +197,7 @@ class GenerationTracker {
     return this.processed_chunks[this.processed_chunks.length - 1].end;
   }
 
-  private processChunk(
-    chunk: Chunk,
-    index: number
-  ): { text: string; start: number; end: number } {
+  private processChunk({ chunk, index }: ProcessChunk) {
     const { text, timestamp } = chunk;
     const [start, end] = timestamp;
 
