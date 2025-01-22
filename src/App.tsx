@@ -41,6 +41,8 @@ function App() {
 
         case "RESULT":
           setOutput(e.data.results);
+          console.log(e.data.results);
+
           break;
 
         case "INFERENCE_DONE":
@@ -90,7 +92,7 @@ function App() {
         <section className="min-h-screen flex flex-col ">
           <Header />
           {output ? (
-            <Information />
+            <Information output={output} />
           ) : isLoading ? (
             <Transcribing />
           ) : isAudioAvailable ? (
