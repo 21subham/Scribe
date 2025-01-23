@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Transcription from "./Transcription";
 import Translation from "./Translation";
 
 export default function Information(props) {
   const { output } = props;
+  const [translation, setTranslation] = useState(null);
+  const [translating, setTranslating] = useState(false);
+  const [toLanguage, setToLanguage] = useState("Select Language");
   const [tab, setTab] = useState("transcription");
+  const worker = useRef<Worker>();
 
   function handleCopy() {
     navigator.clipboard.writeText();
@@ -17,8 +21,27 @@ export default function Information(props) {
     element.download = `AudioScribe_${new Date().toDateString()}.txt`; //TODO
     document.body.appendChild(element);
     element.click();
-    document.body.removeChild(element);
   }
+
+  function generateTranslation() {
+    if (translating || toLanguage === "Select Language") {
+      return;
+    }
+    setTranslating(true);
+    if (worker.current) {
+      worker.current.postMessage({
+        text: output.map((val) => val.text),
+        src_language: "eng_Latn",
+        tgt_language: toLanguage,
+      });
+    }
+  }
+
+  //pass transcription
+  const textElement =
+    tab === "transcription"
+      ? output.map((val) => val.text)
+      : translation || "No Translation Available";
 
   return (
     <main className="flex-1 flex flex-col justify-center p-4 gap-3 sm:gap-4 text-center pb-20  max-w-prose w-full mx-auto">
@@ -50,9 +73,18 @@ export default function Information(props) {
       </div>
       <div className="my-3 flex flex-col">
         {tab === "transcription" ? (
-          <Transcription {...props} />
+          <Transcription {...props} textElement={textElement} />
         ) : (
-          <Translation {...props} />
+          <Translation
+            {...props}
+            toLanguage={toLanguage}
+            translating={translating}
+            textElement={textElement}
+            setTranslating={setTranslating}
+            setTranslation={setTranslation}
+            setToLanguage={setToLanguage}
+            generateTranslation={generateTranslation}
+          />
         )}
       </div>
       <div className="flex items-center gap-4 mx-auto ">

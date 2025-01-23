@@ -1,7 +1,7 @@
 function Transcription(props) {
-  const { output } = props;
-  const TranscribedText = output.map((val) => val.text);
-  return <div>{TranscribedText}</div>;
+  const { textElement } = props;
+
+  return <div>{textElement}</div>;
 }
 
 export default Transcription;
