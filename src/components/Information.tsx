@@ -41,15 +41,20 @@ export default function Information(props) {
     };
   });
 
+  const textElement =
+    tab === "transcription"
+      ? output.map((val) => val.text)
+      : translation || "No Translation";
+
   function handleCopy() {
-    navigator.clipboard.writeText();
+    navigator.clipboard.writeText(textElement);
   }
 
   function handleDownload() {
     const element = document.createElement("a");
-    const file = new Blob([], { type: "text/plain" });
+    const file = new Blob([textElement], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
-    element.download = `AudioScribe_${new Date().toDateString()}.txt`; //TODO
+    element.download = `AudioScribe_${new Date().toString()}.txt`; //TODO
     document.body.appendChild(element);
     element.click();
   }
@@ -69,10 +74,6 @@ export default function Information(props) {
   }
 
   //pass transcription
-  const textElement =
-    tab === "transcription"
-      ? output.map((val) => val.text)
-      : translation || "No Translation Available";
 
   return (
     <main className="flex-1 flex flex-col justify-center p-4 gap-3 sm:gap-4 text-center pb-20  max-w-prose w-full mx-auto">
@@ -120,6 +121,7 @@ export default function Information(props) {
       </div>
       <div className="flex items-center gap-4 mx-auto ">
         <button
+          onClick={handleCopy}
           title="Copy"
           className=" bg-white text-blue-300 px-2 aspect-square grid place-items-center rounded hover:text-blue-500 duration-200"
         >
@@ -127,6 +129,7 @@ export default function Information(props) {
         </button>
 
         <button
+          onClick={handleDownload}
           title="Download"
           className=" bg-white text-blue-300 px-2 aspect-square grid place-items-center rounded  hover:text-blue-500 duration-200"
         >
