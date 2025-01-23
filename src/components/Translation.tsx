@@ -34,7 +34,9 @@ function Translation(props) {
             <button
               onClick={generateTranslation}
               className="specialBtn px-3 py-2 rounded-lg text-blue-400 hover:text-blue-600 duration:200"
-            ></button>
+            >
+              Translate
+            </button>
           </div>
         </div>
       )}

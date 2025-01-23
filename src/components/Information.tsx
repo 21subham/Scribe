@@ -10,6 +10,37 @@ export default function Information(props) {
   const [tab, setTab] = useState("transcription");
   const worker = useRef<Worker>();
 
+  useEffect(() => {
+    if (!worker.current) {
+      worker.current = new Worker(
+        new URL("../utils/translate.worker.ts", import.meta.url),
+        { type: "module" }
+      );
+    }
+    const onMessageRecieved = async (event: MessageEvent) => {
+      switch (event.data.status) {
+        case "initiate":
+          console.log("Downloading...");
+          break;
+        case "progress":
+          console.log("Loading...");
+          break;
+        case "update":
+          setTranslation(event.data.output);
+          console.log(event.data.output);
+          break;
+        case "complete":
+          setTranslating(false);
+          console.log("Done");
+          break;
+      }
+    };
+    worker.current.addEventListener("message", onMessageRecieved);
+    return () => {
+      worker.current?.removeEventListener("message", onMessageRecieved);
+    };
+  });
+
   function handleCopy() {
     navigator.clipboard.writeText();
   }
