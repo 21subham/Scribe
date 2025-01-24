@@ -6,11 +6,12 @@ import FileDisplay from "./components/FileDisplay";
 import Information from "./components/Information";
 import Transcribing from "./components/Transcribing";
 import { MessageTypes } from "./utils/presets";
+import { IOutputItem } from "./types/Types";
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [audioStream, setAudioStream] = useState<Blob | null>(null);
-  const [output, setOutput] = useState<Blob | null>(null);
+  const [output, setOutput] = useState<IOutputItem[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [finished, setFinished] = useState<boolean>(false);
   const [downloading, setDownloading] = useState<boolean>(false);
@@ -47,7 +48,7 @@ function App() {
 
         case "INFERENCE_DONE":
           setFinished(true);
-          console.log("done");
+          console.log(finished);
 
           break;
       }
@@ -94,7 +95,7 @@ function App() {
           {output ? (
             <Information output={output} />
           ) : isLoading ? (
-            <Transcribing />
+            <Transcribing downloading={downloading} />
           ) : isAudioAvailable ? (
             <FileDisplay
               handleFormSubmission={handleFormSubmission}

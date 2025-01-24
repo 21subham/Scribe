@@ -1,14 +1,21 @@
 import { useRef, useState, useEffect } from "react";
 import Transcription from "./Transcription";
 import Translation from "./Translation";
+import { IInformationType } from "../types/Types";
 
-export default function Information(props) {
-  const { output } = props;
+export default function Information({ output }: IInformationType) {
   const [translation, setTranslation] = useState(null);
   const [translating, setTranslating] = useState(false);
   const [toLanguage, setToLanguage] = useState("Select Language");
   const [tab, setTab] = useState("transcription");
   const worker = useRef<Worker>();
+
+  const transcribedText: string = output.map((val) => val.text).join("");
+  const textElement =
+    tab === "transcription"
+      ? transcribedText
+      : translation || "No Translation Available";
+  console.log(textElement);
 
   useEffect(() => {
     if (!worker.current) {
@@ -41,11 +48,6 @@ export default function Information(props) {
     };
   });
 
-  const textElement =
-    tab === "transcription"
-      ? output.map((val) => val.text)
-      : translation || "No Translation";
-
   function handleCopy() {
     navigator.clipboard.writeText(textElement);
   }
@@ -66,7 +68,7 @@ export default function Information(props) {
     setTranslating(true);
     if (worker.current) {
       worker.current.postMessage({
-        text: output.map((val) => val.text),
+        text: output.map((val: any) => val.text),
         src_language: "eng_Latn",
         tgt_language: toLanguage,
       });
@@ -105,10 +107,10 @@ export default function Information(props) {
       </div>
       <div className="my-3 flex flex-col">
         {tab === "transcription" ? (
-          <Transcription {...props} textElement={textElement} />
+          <Transcription textElement={textElement} />
         ) : (
           <Translation
-            {...props}
+            output={output}
             toLanguage={toLanguage}
             translating={translating}
             textElement={textElement}
