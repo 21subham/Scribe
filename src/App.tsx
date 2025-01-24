@@ -48,7 +48,11 @@ function App() {
 
         case "INFERENCE_DONE":
           setFinished(true);
-          if (finished) console.log("done");
+          if (finished) {
+            console.log("finished");
+          }
+
+          console.log("done");
 
           break;
       }
