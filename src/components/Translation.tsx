@@ -15,9 +15,9 @@ function Translation({
           <p className="text-xs sm:text-sm font-medium text-slate-500 mr-auto">
             To Language
           </p>
-          <div className="flex items-stretch gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 sm:max-w-[100] ">
             <select
-              className="flex-1 outline-none bg-white focus:outline-none border border-solid border-transparent hover:border-blue-300 duration-200 p-2  rounded"
+              className=" flex-1 outline-none bg-white focus:outline-none border border-solid border-transparent hover:border-blue-300 duration-200 p-2  rounded"
               value={toLanguage}
               onChange={(e) => setToLanguage(e.target.value)}
             >
@@ -32,7 +32,7 @@ function Translation({
             </select>
             <button
               onClick={generateTranslation}
-              className="specialBtn px-3 py-2 rounded-lg text-blue-400 hover:text-blue-600 duration:200"
+              className="specialBtn px-3 py-2 rounded-lg text-blue-400 hover:text-blue-600 duration-200 mx-auto"
             >
               Translate
             </button>
