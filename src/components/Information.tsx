@@ -110,12 +110,9 @@ export default function Information({ output }: IInformationType) {
           <Transcription textElement={textElement} />
         ) : (
           <Translation
-            output={output}
             toLanguage={toLanguage}
             translating={translating}
             textElement={textElement}
-            setTranslating={setTranslating}
-            setTranslation={setTranslation}
             setToLanguage={setToLanguage}
             generateTranslation={generateTranslation}
           />
