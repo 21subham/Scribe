@@ -172,11 +172,14 @@ class GenerationTracker {
 
   chunkCallback(data: Chunk): void {
     this.chunks.push(data);
-    const [{ chunks }] = this.pipeline.tokenizer._decode_asr(this.chunks, {
-      time_precision: this.time_precision,
-      return_timestamps: true,
-      force_full_sequence: false,
-    });
+    const [text, { chunks }] = this.pipeline.tokenizer._decode_asr(
+      this.chunks,
+      {
+        time_precision: this.time_precision,
+        return_timestamps: true,
+        force_full_sequence: false,
+      }
+    );
 
     this.processed_chunks = chunks.map((chunk: Chunk, index: number) =>
       this.processChunk({ chunk, index })

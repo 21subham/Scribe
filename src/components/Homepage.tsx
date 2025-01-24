@@ -1,13 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-
-type IHomepagePropType = {
-  // setAudioStream: (audioStream:  null | Blob) => void;
-
-  // setFile: (file: File | null) => void
-  setAudioStream: React.Dispatch<React.SetStateAction<Blob | null>>;
-  setFile: React.Dispatch<React.SetStateAction<File | null>>;
-};
-
+import { useEffect, useRef, useState } from "react";
+import { IHomepagePropType } from "../types/Types";
 export default function Homepage({
   setAudioStream,
   setFile,

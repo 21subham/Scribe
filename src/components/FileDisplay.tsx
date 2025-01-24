@@ -1,13 +1,8 @@
-interface IFileDisplayPropType {
-  handleAudioReset: () => void;
-  handleFormSubmission: () => void;
-  file: File | null;
-  audioStream: Blob | null;
-}
+import { IFileDisplayPropType } from "../types/Types";
+
 export default function FileDisplay({
   handleAudioReset,
   file,
-  audioStream,
   handleFormSubmission,
 }: IFileDisplayPropType) {
   return (
